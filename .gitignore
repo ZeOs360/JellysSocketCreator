@@ -1,0 +1,46 @@
+# Build outputs
+x64/
+Debug/
+Release/
+*.dll
+*.exe
+*.pdb
+*.exp
+*.lib
+*.ilk
+*.obj
+*.log
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.ncb
+*.sdf
+*.opensdf
+*.vc.db
+*.vc.opendb
+ipch/
+
+# .NET
+bin/
+obj/
+*.nupkg
+
+# IDE
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Config (user-specific)
+*.settings
+
+# Keep these for distribution
+!Release/version.dll
+!Release/JellysSocketsConfig.exe
+!Release/JellysSockets.json
+!Release/README.md
