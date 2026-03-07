@@ -2,19 +2,26 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>jelly.ico</ApplicationIcon>
     <Version>1.0.0</Version>
-    <Authors>JellysSockets Team</Authors>
+    <Authors>ZeOs360</Authors>
     <Product>Jelly's Socket Creator</Product>
     <Description>Add custom CPU sockets to PC Building Simulator 2</Description>
+    
+    <!-- Single file executable settings -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="jelly.ico" />
+    <EmbeddedResource Include="jelly.ico" />
     <EmbeddedResource Include="jelly.png" />
   </ItemGroup>
 
