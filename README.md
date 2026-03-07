@@ -22,7 +22,6 @@
 
 - ✅ **Custom Socket Names** - Add your own CPU socket types (AM6, AM7, LGA 1851, etc.)
 - ✅ **Full Compatibility** - Custom sockets work with CPU/Motherboard matching
-- ✅ **Easy Configuration** - User-friendly UI application with modern dark theme
 - ✅ **JSON Config** - Simple configuration file format
 - ✅ **One-Click Deploy** - Deploy to game folder instantly
 
