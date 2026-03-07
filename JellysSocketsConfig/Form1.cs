@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.Reflection;
 using System.Text.Json;
 using System.Windows.Forms;
 
@@ -11,190 +11,283 @@ namespace JellysSocketsConfig
 {
     public partial class Form1 : Form
     {
-        // Modern color scheme
-        private static readonly Color BgDark = Color.FromArgb(18, 18, 24);
-        private static readonly Color BgPanel = Color.FromArgb(28, 28, 36);
-        private static readonly Color BgInput = Color.FromArgb(38, 38, 48);
-        private static readonly Color AccentBlue = Color.FromArgb(59, 130, 246);
-        private static readonly Color AccentGreen = Color.FromArgb(34, 197, 94);
-        private static readonly Color AccentRed = Color.FromArgb(239, 68, 68);
-        private static readonly Color TextPrimary = Color.FromArgb(248, 250, 252);
-        private static readonly Color TextSecondary = Color.FromArgb(148, 163, 184);
-        private static readonly Color BorderColor = Color.FromArgb(55, 65, 81);
+        // Modern color scheme - Purple/Blue gradient theme
+        private static readonly Color BgDark = Color.FromArgb(13, 17, 23);
+        private static readonly Color BgPanel = Color.FromArgb(22, 27, 34);
+        private static readonly Color BgCard = Color.FromArgb(30, 37, 46);
+        private static readonly Color BgInput = Color.FromArgb(33, 38, 45);
+        private static readonly Color AccentPurple = Color.FromArgb(130, 80, 223);
+        private static readonly Color AccentBlue = Color.FromArgb(56, 139, 253);
+        private static readonly Color AccentGreen = Color.FromArgb(63, 185, 80);
+        private static readonly Color AccentRed = Color.FromArgb(248, 81, 73);
+        private static readonly Color AccentOrange = Color.FromArgb(210, 153, 34);
+        private static readonly Color TextPrimary = Color.FromArgb(230, 237, 243);
+        private static readonly Color TextSecondary = Color.FromArgb(139, 148, 158);
+        private static readonly Color BorderColor = Color.FromArgb(48, 54, 61);
 
         private Panel pnlHeader = null!;
         private Panel pnlContent = null!;
         private Panel pnlFooter = null!;
         private DataGridView dgvSockets = null!;
         private TextBox txtGamePath = null!;
-        private ModernButton btnBrowse = null!;
-        private ModernButton btnAdd = null!;
-        private ModernButton btnRemove = null!;
-        private ModernButton btnSave = null!;
-        private ModernButton btnDeploy = null!;
+        private GradientButton btnBrowse = null!;
+        private GradientButton btnAdd = null!;
+        private GradientButton btnRemove = null!;
+        private GradientButton btnSave = null!;
+        private GradientButton btnDeploy = null!;
         private Label lblStatus = null!;
-        private Label lblVersion = null!;
+        private PictureBox picLogo = null!;
 
         private List<SocketEntry> sockets = new List<SocketEntry>();
         private string configPath = "JellysSockets.json";
-
-        // Enable window dragging
-        [DllImport("user32.dll")]
-        private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-        [DllImport("user32.dll")]
-        private static extern bool ReleaseCapture();
-        private const int WM_NCLBUTTONDOWN = 0xA1;
-        private const int HT_CAPTION = 0x2;
+        private Image? logoImage = null;
 
         public Form1()
         {
             InitializeComponent();
+            LoadLogoImage();
             SetupModernUI();
             LoadConfig();
             LoadSettings();
         }
 
+        private void LoadLogoImage()
+        {
+            try
+            {
+                // Try to load from embedded resource
+                var assembly = Assembly.GetExecutingAssembly();
+                var resourceName = "JellysSocketsConfig.jelly.png";
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream != null)
+                {
+                    logoImage = Image.FromStream(stream);
+                }
+            }
+            catch
+            {
+                // Try to load from file
+                try
+                {
+                    if (File.Exists("jelly.png"))
+                        logoImage = Image.FromFile("jelly.png");
+                }
+                catch { }
+            }
+        }
+
         private void SetupModernUI()
         {
             // Form settings
-            this.Text = "JellysSockets";
-            this.Size = new Size(700, 580);
-            this.MinimumSize = new Size(600, 500);
+            this.Text = "Jelly's Socket Creator";
+            this.Size = new Size(750, 620);
+            this.MinimumSize = new Size(650, 550);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = BgDark;
             this.ForeColor = TextPrimary;
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.DoubleBuffered = true;
 
-            // Header Panel
-            pnlHeader = new Panel
+            // Set form icon
+            try
+            {
+                if (File.Exists("jelly.ico"))
+                    this.Icon = new Icon("jelly.ico");
+            }
+            catch { }
+
+            // ========== HEADER ==========
+            pnlHeader = new GradientPanel(BgPanel, Color.FromArgb(35, 39, 47))
             {
                 Dock = DockStyle.Top,
-                Height = 80,
-                BackColor = BgPanel,
-                Padding = new Padding(20, 15, 20, 15)
+                Height = 90
             };
-            pnlHeader.Paint += (s, e) => DrawPanelBorder(e.Graphics, pnlHeader, false, true);
 
+            // Logo
+            picLogo = new PictureBox
+            {
+                Size = new Size(60, 60),
+                Location = new Point(25, 15),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = Color.Transparent
+            };
+            if (logoImage != null)
+                picLogo.Image = logoImage;
+            pnlHeader.Controls.Add(picLogo);
+
+            // Title
             var lblTitle = new Label
             {
-                Text = "⚡ JellysSockets",
-                Font = new Font("Segoe UI", 20, FontStyle.Bold),
+                Text = "Jelly's Socket Creator",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
                 ForeColor = TextPrimary,
                 AutoSize = true,
-                Location = new Point(20, 12)
+                Location = new Point(95, 18),
+                BackColor = Color.Transparent
             };
+            pnlHeader.Controls.Add(lblTitle);
 
+            // Subtitle
             var lblSubtitle = new Label
             {
-                Text = "Custom CPU Socket Manager for PC Building Simulator 2",
+                Text = "Custom CPU Sockets for PC Building Simulator 2",
                 Font = new Font("Segoe UI", 9),
                 ForeColor = TextSecondary,
                 AutoSize = true,
-                Location = new Point(22, 48)
+                Location = new Point(97, 52),
+                BackColor = Color.Transparent
             };
+            pnlHeader.Controls.Add(lblSubtitle);
 
-            lblVersion = new Label
+            // Version badge
+            var lblVersion = new Label
             {
                 Text = "v1.0.0",
-                Font = new Font("Segoe UI", 9),
-                ForeColor = AccentBlue,
-                AutoSize = true,
+                Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                ForeColor = AccentPurple,
+                BackColor = Color.FromArgb(130, 80, 223, 30),
+                AutoSize = false,
+                Size = new Size(50, 20),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Location = new Point(this.Width - 80, 20),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
+            pnlHeader.Controls.Add(lblVersion);
 
-            pnlHeader.Controls.AddRange(new Control[] { lblTitle, lblSubtitle, lblVersion });
             this.Controls.Add(pnlHeader);
 
-            // Footer Panel
+            // ========== FOOTER ==========
             pnlFooter = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 60,
-                BackColor = BgPanel,
-                Padding = new Padding(20, 10, 20, 10)
+                Height = 55,
+                BackColor = BgPanel
             };
-            pnlFooter.Paint += (s, e) => DrawPanelBorder(e.Graphics, pnlFooter, true, false);
+            pnlFooter.Paint += (s, e) =>
+            {
+                using var pen = new Pen(BorderColor, 1);
+                e.Graphics.DrawLine(pen, 0, 0, pnlFooter.Width, 0);
+            };
 
             lblStatus = new Label
             {
-                Text = "✓ Ready",
-                Font = new Font("Segoe UI", 10),
+                Text = "✓ Ready - Add your custom sockets and deploy!",
+                Font = new Font("Segoe UI", 9),
                 ForeColor = TextSecondary,
                 AutoSize = true,
-                Location = new Point(20, 20)
+                Location = new Point(25, 18)
             };
             pnlFooter.Controls.Add(lblStatus);
+
+            // GitHub link
+            var lblGitHub = new LinkLabel
+            {
+                Text = "GitHub",
+                Font = new Font("Segoe UI", 9),
+                LinkColor = AccentBlue,
+                ActiveLinkColor = AccentPurple,
+                AutoSize = true,
+                Location = new Point(this.Width - 80, 18),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+            lblGitHub.Click += (s, e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "https://github.com/ZeOs360/JellysSocketCreator",
+                UseShellExecute = true
+            });
+            pnlFooter.Controls.Add(lblGitHub);
+
             this.Controls.Add(pnlFooter);
 
-            // Content Panel
+            // ========== CONTENT ==========
             pnlContent = new Panel
             {
                 Dock = DockStyle.Fill,
                 BackColor = BgDark,
-                Padding = new Padding(25, 20, 25, 20)
+                Padding = new Padding(25, 15, 25, 15)
             };
             this.Controls.Add(pnlContent);
 
-            // Game Path Section
-            var lblGamePath = new Label
+            // Game Path Card
+            var cardPath = new RoundedPanel
             {
-                Text = "📁 Game Installation Path",
-                Font = new Font("Segoe UI Semibold", 10),
-                ForeColor = TextPrimary,
-                AutoSize = true,
-                Location = new Point(25, 20)
-            };
-            pnlContent.Controls.Add(lblGamePath);
-
-            var pnlPathContainer = new Panel
-            {
-                Location = new Point(25, 45),
-                Size = new Size(630, 40),
-                BackColor = BgInput,
+                Location = new Point(25, 15),
+                Size = new Size(680, 85),
+                BackColor = BgCard,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
-            pnlPathContainer.Paint += (s, e) => DrawRoundedBorder(e.Graphics, pnlPathContainer);
+
+            var lblPathTitle = new Label
+            {
+                Text = "📁 Game Installation",
+                Font = new Font("Segoe UI Semibold", 11),
+                ForeColor = TextPrimary,
+                AutoSize = true,
+                Location = new Point(15, 12),
+                BackColor = Color.Transparent
+            };
+            cardPath.Controls.Add(lblPathTitle);
 
             txtGamePath = new TextBox
             {
-                Location = new Point(12, 9),
-                Size = new Size(540, 22),
+                Location = new Point(15, 45),
+                Size = new Size(560, 28),
                 BackColor = BgInput,
                 ForeColor = TextPrimary,
-                BorderStyle = BorderStyle.None,
+                BorderStyle = BorderStyle.FixedSingle,
                 Font = new Font("Segoe UI", 10),
                 Text = @"C:\Program Files\Epic Games\PCBuildingSimulator2",
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
-            pnlPathContainer.Controls.Add(txtGamePath);
+            cardPath.Controls.Add(txtGamePath);
 
-            btnBrowse = new ModernButton("Browse", AccentBlue)
+            btnBrowse = new GradientButton("Browse", AccentBlue, Color.FromArgb(36, 119, 233))
             {
-                Location = new Point(558, 5),
-                Size = new Size(65, 30),
+                Location = new Point(585, 43),
+                Size = new Size(80, 32),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
             btnBrowse.Click += BtnBrowse_Click;
-            pnlPathContainer.Controls.Add(btnBrowse);
-            pnlContent.Controls.Add(pnlPathContainer);
+            cardPath.Controls.Add(btnBrowse);
 
-            // Sockets Section
-            var lblSockets = new Label
+            pnlContent.Controls.Add(cardPath);
+
+            // Sockets Card
+            var cardSockets = new RoundedPanel
+            {
+                Location = new Point(25, 110),
+                Size = new Size(680, 290),
+                BackColor = BgCard,
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+
+            var lblSocketsTitle = new Label
             {
                 Text = "🔧 Custom Sockets",
-                Font = new Font("Segoe UI Semibold", 10),
+                Font = new Font("Segoe UI Semibold", 11),
                 ForeColor = TextPrimary,
                 AutoSize = true,
-                Location = new Point(25, 100)
+                Location = new Point(15, 12),
+                BackColor = Color.Transparent
             };
-            pnlContent.Controls.Add(lblSockets);
+            cardSockets.Controls.Add(lblSocketsTitle);
+
+            var lblSocketsHint = new Label
+            {
+                Text = "Socket IDs must be 100-999",
+                Font = new Font("Segoe UI", 8),
+                ForeColor = TextSecondary,
+                AutoSize = true,
+                Location = new Point(160, 16),
+                BackColor = Color.Transparent
+            };
+            cardSockets.Controls.Add(lblSocketsHint);
 
             // DataGridView
             dgvSockets = new DataGridView
             {
-                Location = new Point(25, 125),
-                Size = new Size(630, 230),
+                Location = new Point(15, 45),
+                Size = new Size(650, 190),
                 BackgroundColor = BgInput,
                 ForeColor = TextPrimary,
                 GridColor = BorderColor,
@@ -207,114 +300,105 @@ namespace JellysSocketsConfig
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 RowHeadersVisible = false,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                RowTemplate = { Height = 35 },
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+                RowTemplate = { Height = 38 },
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                ScrollBars = ScrollBars.Vertical
             };
 
-            dgvSockets.Columns.Add(new DataGridViewTextBoxColumn 
-            { 
-                Name = "ID", 
-                HeaderText = "Socket ID", 
-                Width = 120,
-                DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter }
+            dgvSockets.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "ID",
+                HeaderText = "  Socket ID",
+                Width = 150,
+                DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleLeft }
             });
-            dgvSockets.Columns.Add(new DataGridViewTextBoxColumn 
-            { 
-                Name = "Name", 
-                HeaderText = "Socket Name"
+            dgvSockets.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Name",
+                HeaderText = "  Socket Name"
             });
 
             dgvSockets.DefaultCellStyle.BackColor = BgInput;
             dgvSockets.DefaultCellStyle.ForeColor = TextPrimary;
-            dgvSockets.DefaultCellStyle.SelectionBackColor = AccentBlue;
-            dgvSockets.DefaultCellStyle.SelectionForeColor = TextPrimary;
+            dgvSockets.DefaultCellStyle.SelectionBackColor = AccentPurple;
+            dgvSockets.DefaultCellStyle.SelectionForeColor = Color.White;
             dgvSockets.DefaultCellStyle.Font = new Font("Segoe UI", 10);
-            dgvSockets.DefaultCellStyle.Padding = new Padding(8, 0, 8, 0);
+            dgvSockets.DefaultCellStyle.Padding = new Padding(10, 0, 10, 0);
 
-            dgvSockets.ColumnHeadersDefaultCellStyle.BackColor = BgPanel;
+            dgvSockets.ColumnHeadersDefaultCellStyle.BackColor = BgCard;
             dgvSockets.ColumnHeadersDefaultCellStyle.ForeColor = TextSecondary;
             dgvSockets.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9);
-            dgvSockets.ColumnHeadersDefaultCellStyle.Padding = new Padding(8, 0, 8, 0);
-            dgvSockets.ColumnHeadersHeight = 40;
+            dgvSockets.ColumnHeadersHeight = 42;
             dgvSockets.EnableHeadersVisualStyles = false;
 
-            dgvSockets.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(32, 32, 42);
-            pnlContent.Controls.Add(dgvSockets);
+            dgvSockets.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(38, 43, 52);
 
-            // Button Panel
-            var pnlButtons = new Panel
+            cardSockets.Controls.Add(dgvSockets);
+
+            // Socket buttons
+            btnAdd = new GradientButton("+ Add Socket", AccentGreen, Color.FromArgb(43, 165, 60))
             {
-                Location = new Point(25, 365),
-                Size = new Size(630, 45),
+                Location = new Point(15, 245),
+                Size = new Size(120, 34),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            btnAdd.Click += BtnAdd_Click;
+            cardSockets.Controls.Add(btnAdd);
+
+            btnRemove = new GradientButton("Remove", AccentRed, Color.FromArgb(228, 61, 53))
+            {
+                Location = new Point(145, 245),
+                Size = new Size(100, 34),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            btnRemove.Click += BtnRemove_Click;
+            cardSockets.Controls.Add(btnRemove);
+
+            pnlContent.Controls.Add(cardSockets);
+
+            // Action Buttons Panel
+            var pnlActions = new Panel
+            {
+                Location = new Point(25, 410),
+                Size = new Size(680, 50),
                 BackColor = Color.Transparent,
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
             };
 
-            btnAdd = new ModernButton("+ Add Socket", AccentGreen)
+            btnSave = new GradientButton("💾 Save Config", BorderColor, Color.FromArgb(58, 64, 71))
             {
                 Location = new Point(0, 5),
-                Size = new Size(120, 36)
-            };
-            btnAdd.Click += BtnAdd_Click;
-
-            btnRemove = new ModernButton("Remove", AccentRed)
-            {
-                Location = new Point(130, 5),
-                Size = new Size(100, 36)
-            };
-            btnRemove.Click += BtnRemove_Click;
-
-            btnSave = new ModernButton("Save", BorderColor)
-            {
-                Location = new Point(400, 5),
-                Size = new Size(100, 36),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right
+                Size = new Size(130, 40)
             };
             btnSave.Click += BtnSave_Click;
+            pnlActions.Controls.Add(btnSave);
 
-            btnDeploy = new ModernButton("🚀 Deploy", AccentBlue)
+            btnDeploy = new GradientButton("🚀 Deploy to Game", AccentPurple, Color.FromArgb(100, 60, 193))
             {
-                Location = new Point(510, 5),
-                Size = new Size(120, 36),
+                Location = new Point(530, 5),
+                Size = new Size(150, 40),
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
             btnDeploy.Click += BtnDeploy_Click;
+            pnlActions.Controls.Add(btnDeploy);
 
-            pnlButtons.Controls.AddRange(new Control[] { btnAdd, btnRemove, btnSave, btnDeploy });
-            pnlContent.Controls.Add(pnlButtons);
+            pnlContent.Controls.Add(pnlActions);
 
             // Resize handler
             this.Resize += (s, e) =>
             {
-                lblVersion.Location = new Point(pnlHeader.Width - 70, 14);
-                pnlPathContainer.Width = pnlContent.Width - 50;
-                txtGamePath.Width = pnlPathContainer.Width - 90;
-                dgvSockets.Width = pnlContent.Width - 50;
-                pnlButtons.Width = pnlContent.Width - 50;
-                btnSave.Left = pnlButtons.Width - 230;
-                btnDeploy.Left = pnlButtons.Width - 120;
+                cardPath.Width = pnlContent.Width - 50;
+                txtGamePath.Width = cardPath.Width - 120;
+                cardSockets.Width = pnlContent.Width - 50;
+                cardSockets.Height = pnlContent.Height - 180;
+                dgvSockets.Width = cardSockets.Width - 30;
+                dgvSockets.Height = cardSockets.Height - 100;
+                btnAdd.Top = cardSockets.Height - 45;
+                btnRemove.Top = cardSockets.Height - 45;
+                pnlActions.Width = pnlContent.Width - 50;
+                pnlActions.Top = pnlContent.Height - 70;
             };
-
-            // Initial position
-            lblVersion.Location = new Point(pnlHeader.Width - 70, 14);
-        }
-
-        private void DrawPanelBorder(Graphics g, Panel p, bool top, bool bottom)
-        {
-            using (var pen = new Pen(BorderColor, 1))
-            {
-                if (top) g.DrawLine(pen, 0, 0, p.Width, 0);
-                if (bottom) g.DrawLine(pen, 0, p.Height - 1, p.Width, p.Height - 1);
-            }
-        }
-
-        private void DrawRoundedBorder(Graphics g, Panel p)
-        {
-            using (var pen = new Pen(BorderColor, 1))
-            {
-                g.DrawRectangle(pen, 0, 0, p.Width - 1, p.Height - 1);
-            }
         }
 
         private void LoadConfig()
@@ -333,7 +417,7 @@ namespace JellysSocketsConfig
                 }
                 catch (Exception ex)
                 {
-                    SetStatus("⚠ Error loading config: " + ex.Message, AccentRed);
+                    SetStatus($"⚠ Config error: {ex.Message}", AccentOrange);
                 }
             }
             RefreshGrid();
@@ -375,9 +459,7 @@ namespace JellysSocketsConfig
             {
                 string gamePath = File.ReadAllText(settingsPath).Trim();
                 if (!string.IsNullOrEmpty(gamePath))
-                {
                     txtGamePath.Text = gamePath;
-                }
             }
         }
 
@@ -404,7 +486,7 @@ namespace JellysSocketsConfig
             {
                 txtGamePath.Text = dialog.SelectedPath;
                 SaveSettings();
-                SetStatus("✓ Game path updated", AccentGreen);
+                SetStatus("✓ Game path updated!", AccentGreen);
             }
         }
 
@@ -421,7 +503,7 @@ namespace JellysSocketsConfig
             {
                 sockets.Add(new SocketEntry { id = form.SocketId, name = form.SocketName });
                 RefreshGrid();
-                SetStatus($"✓ Added socket: {form.SocketId} = {form.SocketName}", AccentGreen);
+                SetStatus($"✓ Added: {form.SocketId} = {form.SocketName}", AccentGreen);
             }
         }
 
@@ -435,7 +517,7 @@ namespace JellysSocketsConfig
                     string name = sockets[idx].name;
                     sockets.RemoveAt(idx);
                     RefreshGrid();
-                    SetStatus($"✓ Removed socket: {name}", TextSecondary);
+                    SetStatus($"✓ Removed: {name}", TextSecondary);
                 }
             }
         }
@@ -444,7 +526,7 @@ namespace JellysSocketsConfig
         {
             SaveConfig();
             SaveSettings();
-            SetStatus($"✓ Saved {sockets.Count} sockets", AccentGreen);
+            SetStatus($"✓ Saved {sockets.Count} socket(s) to config", AccentGreen);
         }
 
         private void BtnDeploy_Click(object? sender, EventArgs e)
@@ -455,7 +537,7 @@ namespace JellysSocketsConfig
             string gamePath = txtGamePath.Text;
             if (!Directory.Exists(gamePath))
             {
-                SetStatus("✗ Game folder not found!", AccentRed);
+                SetStatus("✗ Game folder not found! Check the path.", AccentRed);
                 return;
             }
 
@@ -469,18 +551,25 @@ namespace JellysSocketsConfig
                 string sourceDll = "version.dll";
                 string destDll = Path.Combine(gamePath, "version.dll");
                 if (File.Exists(sourceDll))
-                {
                     File.Copy(sourceDll, destDll, true);
-                }
 
-                SetStatus("✓ Deployed successfully! Launch the game to apply changes.", AccentGreen);
+                SetStatus("✓ Deployed! Launch the game to apply changes.", AccentGreen);
+                
+                MessageBox.Show(
+                    "Deployment successful!\n\nYour custom sockets are now installed.\nLaunch PC Building Simulator 2 to use them.",
+                    "Jelly's Socket Creator",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
             }
             catch (Exception ex)
             {
-                SetStatus("✗ Deploy error: " + ex.Message, AccentRed);
+                SetStatus($"✗ Deploy failed: {ex.Message}", AccentRed);
             }
         }
     }
+
+    // ==================== HELPER CLASSES ====================
 
     public class SocketEntry
     {
@@ -493,45 +582,102 @@ namespace JellysSocketsConfig
         public List<SocketEntry> sockets { get; set; } = new();
     }
 
-    public class ModernButton : Button
+    public class GradientPanel : Panel
     {
-        private Color baseColor;
-        private bool isHovered = false;
+        private Color color1, color2;
 
-        public ModernButton(string text, Color color)
+        public GradientPanel(Color c1, Color c2)
         {
-            this.Text = text;
-            this.baseColor = color;
-            this.FlatStyle = FlatStyle.Flat;
-            this.FlatAppearance.BorderSize = 0;
-            this.BackColor = color;
-            this.ForeColor = Color.White;
-            this.Font = new Font("Segoe UI", 9, FontStyle.Regular);
-            this.Cursor = Cursors.Hand;
-
-            this.MouseEnter += (s, e) => { isHovered = true; UpdateColor(); };
-            this.MouseLeave += (s, e) => { isHovered = false; UpdateColor(); };
+            color1 = c1;
+            color2 = c2;
+            this.DoubleBuffered = true;
         }
 
-        private void UpdateColor()
+        protected override void OnPaint(PaintEventArgs e)
         {
-            if (isHovered)
-            {
-                this.BackColor = ControlPaint.Light(baseColor, 0.15f);
-            }
-            else
-            {
-                this.BackColor = baseColor;
-            }
+            using var brush = new LinearGradientBrush(
+                this.ClientRectangle,
+                color1, color2,
+                LinearGradientMode.Vertical);
+            e.Graphics.FillRectangle(brush, this.ClientRectangle);
+        }
+    }
+
+    public class RoundedPanel : Panel
+    {
+        public RoundedPanel()
+        {
+            this.DoubleBuffered = true;
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
-            
-            // Draw rounded corners effect
-            using var path = GetRoundedRect(new Rectangle(0, 0, Width - 1, Height - 1), 6);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+            using var path = GetRoundedRect(new Rectangle(0, 0, Width - 1, Height - 1), 8);
+            using var brush = new SolidBrush(this.BackColor);
+            e.Graphics.FillPath(brush, path);
+
+            using var pen = new Pen(Color.FromArgb(48, 54, 61), 1);
+            e.Graphics.DrawPath(pen, path);
+        }
+
+        private GraphicsPath GetRoundedRect(Rectangle bounds, int radius)
+        {
+            var path = new GraphicsPath();
+            path.AddArc(bounds.X, bounds.Y, radius * 2, radius * 2, 180, 90);
+            path.AddArc(bounds.Right - radius * 2, bounds.Y, radius * 2, radius * 2, 270, 90);
+            path.AddArc(bounds.Right - radius * 2, bounds.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+            path.AddArc(bounds.X, bounds.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+    }
+
+    public class GradientButton : Button
+    {
+        private Color color1, color2;
+        private bool isHovered = false;
+
+        public GradientButton(string text, Color c1, Color c2)
+        {
+            this.Text = text;
+            this.color1 = c1;
+            this.color2 = c2;
+            this.FlatStyle = FlatStyle.Flat;
+            this.FlatAppearance.BorderSize = 0;
+            this.ForeColor = Color.White;
+            this.Font = new Font("Segoe UI", 9, FontStyle.Regular);
+            this.Cursor = Cursors.Hand;
+            this.DoubleBuffered = true;
+
+            this.MouseEnter += (s, e) => { isHovered = true; Invalidate(); };
+            this.MouseLeave += (s, e) => { isHovered = false; Invalidate(); };
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+            var rect = new Rectangle(0, 0, Width - 1, Height - 1);
+            using var path = GetRoundedRect(rect, 6);
+
+            // Gradient fill
+            Color c1 = isHovered ? ControlPaint.Light(color1, 0.1f) : color1;
+            Color c2 = isHovered ? ControlPaint.Light(color2, 0.1f) : color2;
+
+            using var brush = new LinearGradientBrush(rect, c1, c2, LinearGradientMode.Vertical);
+            e.Graphics.FillPath(brush, path);
+
+            // Border
+            using var pen = new Pen(Color.FromArgb(60, 255, 255, 255), 1);
+            e.Graphics.DrawPath(pen, path);
+
+            // Text
+            TextRenderer.DrawText(e.Graphics, this.Text, this.Font, rect, this.ForeColor,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+
             this.Region = new Region(path);
         }
 
@@ -555,18 +701,18 @@ namespace JellysSocketsConfig
         public int SocketId { get; private set; }
         public string SocketName { get; private set; } = "";
 
-        private static readonly Color BgDark = Color.FromArgb(28, 28, 36);
-        private static readonly Color BgInput = Color.FromArgb(38, 38, 48);
-        private static readonly Color AccentBlue = Color.FromArgb(59, 130, 246);
-        private static readonly Color AccentGreen = Color.FromArgb(34, 197, 94);
-        private static readonly Color TextPrimary = Color.FromArgb(248, 250, 252);
-        private static readonly Color TextSecondary = Color.FromArgb(148, 163, 184);
-        private static readonly Color BorderColor = Color.FromArgb(55, 65, 81);
+        private static readonly Color BgDark = Color.FromArgb(22, 27, 34);
+        private static readonly Color BgInput = Color.FromArgb(33, 38, 45);
+        private static readonly Color AccentPurple = Color.FromArgb(130, 80, 223);
+        private static readonly Color AccentGreen = Color.FromArgb(63, 185, 80);
+        private static readonly Color TextPrimary = Color.FromArgb(230, 237, 243);
+        private static readonly Color TextSecondary = Color.FromArgb(139, 148, 158);
+        private static readonly Color BorderColor = Color.FromArgb(48, 54, 61);
 
         public AddSocketForm(int suggestedId)
         {
             this.Text = "Add Custom Socket";
-            this.Size = new Size(400, 220);
+            this.Size = new Size(420, 240);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -585,22 +731,31 @@ namespace JellysSocketsConfig
 
             var lblId = new Label
             {
-                Text = "Socket ID (100-999):",
+                Text = "Socket ID:",
                 Font = new Font("Segoe UI", 10),
                 ForeColor = TextSecondary,
-                Location = new Point(20, 60),
+                Location = new Point(20, 65),
                 AutoSize = true
             };
 
             txtId = new TextBox
             {
                 Text = suggestedId.ToString(),
-                Location = new Point(180, 57),
-                Size = new Size(180, 28),
+                Location = new Point(180, 62),
+                Size = new Size(200, 28),
                 BackColor = BgInput,
                 ForeColor = TextPrimary,
                 BorderStyle = BorderStyle.FixedSingle,
                 Font = new Font("Segoe UI", 11)
+            };
+
+            var lblIdHint = new Label
+            {
+                Text = "(100-999)",
+                Font = new Font("Segoe UI", 8),
+                ForeColor = TextSecondary,
+                Location = new Point(115, 68),
+                AutoSize = true
             };
 
             var lblName = new Label
@@ -608,25 +763,25 @@ namespace JellysSocketsConfig
                 Text = "Socket Name:",
                 Font = new Font("Segoe UI", 10),
                 ForeColor = TextSecondary,
-                Location = new Point(20, 100),
+                Location = new Point(20, 105),
                 AutoSize = true
             };
 
             txtName = new TextBox
             {
                 Text = "",
-                Location = new Point(180, 97),
-                Size = new Size(180, 28),
+                Location = new Point(180, 102),
+                Size = new Size(200, 28),
                 BackColor = BgInput,
                 ForeColor = TextPrimary,
                 BorderStyle = BorderStyle.FixedSingle,
                 Font = new Font("Segoe UI", 11)
             };
 
-            var btnAdd = new ModernButton("Add Socket", AccentGreen)
+            var btnAdd = new GradientButton("Add Socket", AccentGreen, Color.FromArgb(43, 165, 60))
             {
-                Location = new Point(100, 145),
-                Size = new Size(100, 35)
+                Location = new Point(115, 155),
+                Size = new Size(110, 38)
             };
             btnAdd.Click += (s, e) =>
             {
@@ -639,15 +794,15 @@ namespace JellysSocketsConfig
                 }
                 else
                 {
-                    MessageBox.Show("Invalid ID (must be 100-999) or empty name!", "Validation Error", 
+                    MessageBox.Show("Invalid ID (must be 100-999) or empty name!", "Validation Error",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             };
 
-            var btnCancel = new ModernButton("Cancel", BorderColor)
+            var btnCancel = new GradientButton("Cancel", BorderColor, Color.FromArgb(58, 64, 71))
             {
-                Location = new Point(210, 145),
-                Size = new Size(100, 35)
+                Location = new Point(235, 155),
+                Size = new Size(110, 38)
             };
             btnCancel.Click += (s, e) =>
             {
@@ -655,7 +810,7 @@ namespace JellysSocketsConfig
                 this.Close();
             };
 
-            this.Controls.AddRange(new Control[] { lblTitle, lblId, txtId, lblName, txtName, btnAdd, btnCancel });
+            this.Controls.AddRange(new Control[] { lblTitle, lblId, lblIdHint, txtId, lblName, txtName, btnAdd, btnCancel });
             this.AcceptButton = btnAdd;
             this.CancelButton = btnCancel;
         }
