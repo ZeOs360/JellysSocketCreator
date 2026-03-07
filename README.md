@@ -1,7 +1,7 @@
-# JellysSockets
+# Jelly's Socket Creator
 
 <p align="center">
-  <img src="docs/banner.png" alt="JellysSockets Banner" width="600">
+  <img src="jelly.png" alt="Jelly's Socket Creator" width="120">
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 
 - ✅ **Custom Socket Names** - Add your own CPU socket types (AM6, AM7, LGA 1851, etc.)
 - ✅ **Full Compatibility** - Custom sockets work with CPU/Motherboard matching
-- ✅ **Easy Configuration** - User-friendly UI application
+- ✅ **Easy Configuration** - User-friendly UI application with modern dark theme
 - ✅ **JSON Config** - Simple configuration file format
 - ✅ **One-Click Deploy** - Deploy to game folder instantly
 
@@ -36,7 +36,7 @@
 
 ### Easy Installation (Recommended)
 
-1. Download the latest release from [Nexus Mods](https://www.nexusmods.com/pcbuildingsimulator2) or [Releases](https://github.com/YOUR_USERNAME/JellysSockets/releases)
+1. Download the latest release from [Nexus Mods](https://www.nexusmods.com/pcbuildingsimulator2/mods/) or [Releases](https://github.com/ZeOs360/JellysSocketCreator/releases)
 2. Run `JellysSocketsConfig.exe`
 3. Set your game installation path
 4. Add your custom sockets
@@ -95,8 +95,8 @@ In your mod's XML files, reference the socket ID or name:
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/JellysSockets.git
-cd JellysSockets
+git clone https://github.com/ZeOs360/JellysSocketCreator.git
+cd JellysSocketCreator
 
 # Build the DLL
 cd JellysSockets
