@@ -162,8 +162,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Credits
 
 - MinHook library by TsudaKageyu
-- PC Building Simulator 2 by Spiral House
-
 ---
 
 <p align="center">
