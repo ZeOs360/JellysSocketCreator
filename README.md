@@ -161,7 +161,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Credits
 
-- MinHook library by TsudaKageyu
+- [MinHook](https://github.com/TsudaKageyu/minhook) library by TsudaKageyu
 ---
 
 <p align="center">
